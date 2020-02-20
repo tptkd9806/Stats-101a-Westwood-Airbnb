@@ -1,0 +1,94 @@
+---
+title: "101a_hw_5_jinah_Weon"
+author: "Jinah Weon 505119077"
+date: '2020 2 5 '
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+# a) The summary output of your final model
+```{r}
+library(readr)
+library(tidyverse)
+airbnb <- read.csv("la_airbnb_detailed.csv")
+
+west_airbnb <- airbnb %>% filter(neighbourhood == "Westwood") %>% select(price, beds) %>% arrange(desc(beds))
+head(west_airbnb)
+```
+
+```{r}
+west <- lm(price ~ beds, west_airbnb)
+summary(west)
+```
+
+y = 139.014 + 12.620* bed
+INTERPRETATION: When there is 0 bed, the price will be 139.014. And as 1 bed is added, the price increases by 12.62.
+
+# b) Diagnostic plots
+```{r}
+plot(west)
+```
+
+Residual plot: There is no trend, which means it has linearity. Hence, has a kind of fan shape which means it is in non-constant variance. 
+Normal QQ plot: Not very straight. Most of the points follow the dashed line. However, as Theoretical Quantiles variablle goes to the right, the points get off from the line. 
+Scale Location plot: There is a little bit of trend going up; which can be interpret as a little constant variance. 
+Residual vs. Leverage Plot: There are some points near cook's distance and one point(326) out of the cook's distance, which can be interpret as a bad leverage.
+
+```{r}
+anova(west)
+```
+
+Anova: F value is 32.605 ( Will compare later)
+
+
+# c) An explanation of why you made any transformations you might have made and an explanation of why you removed any points you might have removed.
+```{r}
+new_airbnb <- airbnb %>% filter(neighbourhood == "Westwood", beds < 20, !is.na(price)) %>% select(price, beds) %>% arrange(desc(beds)) # removing the outliers
+head(new_airbnb)
+trans_plot <- lm(log(price) ~log(beds+1), data= new_airbnb)  
+summary(trans_plot)
+plot(trans_plot)
+```
+
+INTERPRETATION: 
+I have removed beds that are over number of 20 because as we could see from the table we made from question 1, the room with 50 beds would not have price of 50 dollars. Also, I removed the prices with NA because there can be no 0 dollar price for airbnb rooms. It may have been a mistake of observation. I did not remove the variable with 0 beds because there could be airbnb room without any beds. For Transformation part, I added a log transformation to the price, but for bed variable, since it has 0, we can't just log it, therefore I used log(beds+1). 
+As a result, first of all, the anova table gives us information of F value which is bigger than the previous one. Also, if we look at the table, plots are more variated and follows the linearity. Normal QQ plot also show us that the points follow the line more. Lastly, when we look at the Residuals vs. Leverage plot, there are no plots near or outside of the cook's distance and the points all seem as a good leverage.
+
+
+```{r}
+anova(trans_plot)
+```
+
+Anova: F value changed to 146.1 which is a big increase. 
+
+
+# d) What does your model estimate is the price of a rental in Westwood with 3 beds? Give an interval and indicate whether it is a prediction or a confidence interval.
+```{r}
+conf <- predict(trans_plot, data.frame(beds=3), interval = "confidence", level= 0.95)
+exp(conf)
+```
+
+It is a confidence interval with price of lower 145.9383 and upper 165.1566.
+
+```{r}
+prediction <- predict(trans_plot, data.frame(beds =3), interval= "prediction", level= 0.95)
+exp(prediction)
+```
+
+This is a prediction with price of lower 43.07456 and upper 559.557.
+
+# e) A discussion of any shortcomings of your model and their affect on your interval in (d). 
+## For full credit, your model should be as good as ours or better. (We'll show you our model after you've turned in your homework, of course!)
+```{}
+Because I transformed the model with log, the interval showed me very low number which is not correct for the price. Therefore, I used exp() function to unlog the model. Then, it showed proper number for the price. 
+In addition, I think it is better to use confidence interval than prediction because confidence interval has narrower interval which implies that there is a small chance of obtaining an observation within that interval, therefore, our accuracy is higher. 
+```
+
+
+
+
+
+
+
